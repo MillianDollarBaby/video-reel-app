@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './VideoFeed.css';
@@ -34,16 +34,62 @@ const VideoFeed = ({ user, onLogout }) => {
   const minSwipeDistance = 50;
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
-  const loadCategories = async () => {
+  const getAuthHeaders = useCallback(() => ({
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  }), []);
+
+  const loadCategories = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/api/categories`, getAuthHeaders());
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
     }
-  };
+  }, [API_URL, getAuthHeaders]);
 
-  const loadNextVideo = async () => {
+  // Load category feed (all videos from that category)
+  const loadCategoryFeed = useCallback(async (categoryName) => {
+    try {
+      // Get all videos from this category
+      const response = await axios.get(`${API_URL}/api/categories`, getAuthHeaders());
+      const category = response.data.find(cat => cat.name === categoryName);
+      
+      if (category && category.videos.length > 0) {
+        // Shuffle the videos for variety
+        const shuffledVideos = [...category.videos];
+        for (let i = shuffledVideos.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
+        }
+        
+        // Store the feed for this category
+        setCategoryFeeds(prev => ({
+          ...prev,
+          [categoryName]: shuffledVideos
+        }));
+        
+        // Start from the first video
+        setCurrentCategoryIndex(0);
+        setCurrentVideo({
+          video: shuffledVideos[0],
+          category: categoryName
+        });
+        
+        // Reset video to beginning
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error loading category feed:', error);
+    }
+  }, [API_URL, getAuthHeaders]);
+
+  const loadNextVideo = useCallback(async () => {
     setLoading(true);
     setError('');
     
@@ -104,12 +150,12 @@ const VideoFeed = ({ user, onLogout }) => {
     }
     
     setLoading(false);
-  };
+  }, [selectedCategory, categoryFeeds, currentCategoryIndex, API_URL, getAuthHeaders, loadCategoryFeed]);
 
   useEffect(() => {
     loadCategories();
     loadNextVideo();
-  }, []);
+  }, [loadCategories, loadNextVideo]);
 
   useEffect(() => {
     loadNextVideo();
@@ -171,52 +217,6 @@ const VideoFeed = ({ user, onLogout }) => {
       video.removeEventListener('leavepictureinpicture', handleLeavePiP);
     };
   }, [currentVideo]);
-
-  const getAuthHeaders = () => ({
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    }
-  });
-
-  // Load category feed (all videos from that category)
-  const loadCategoryFeed = async (categoryName) => {
-    try {
-      // Get all videos from this category
-      const response = await axios.get(`${API_URL}/api/categories`, getAuthHeaders());
-      const category = response.data.find(cat => cat.name === categoryName);
-      
-      if (category && category.videos.length > 0) {
-        // Shuffle the videos for variety
-        const shuffledVideos = [...category.videos];
-        for (let i = shuffledVideos.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
-        }
-        
-        // Store the feed for this category
-        setCategoryFeeds(prev => ({
-          ...prev,
-          [categoryName]: shuffledVideos
-        }));
-        
-        // Start from the first video
-        setCurrentCategoryIndex(0);
-        setCurrentVideo({
-          video: shuffledVideos[0],
-          category: categoryName
-        });
-        
-        // Reset video to beginning
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.error('Error loading category feed:', error);
-    }
-  };
 
   const handleInteraction = async (interactionType) => {
     if (!currentVideo) return;
@@ -370,10 +370,6 @@ const VideoFeed = ({ user, onLogout }) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const handleControlsToggle = () => {
-    setShowControls(!showControls);
   };
 
   if (loading && !currentVideo) {

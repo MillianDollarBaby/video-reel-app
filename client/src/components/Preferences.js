@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import './Preferences.css';
@@ -16,7 +16,7 @@ const Preferences = ({ user, onLogout }) => {
     }
   });
 
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_URL}/api/preferences`, getAuthHeaders());
@@ -26,11 +26,11 @@ const Preferences = ({ user, onLogout }) => {
       console.error('Error fetching preferences:', error);
     }
     setLoading(false);
-  };
+  }, [API_URL]);
 
   useEffect(() => {
     fetchPreferences();
-  }, []);
+  }, [fetchPreferences]);
 
   const getScoreColor = (score) => {
     if (score >= 3) return '#4CAF50'; // Green for high preference
