@@ -8,9 +8,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm install
 
-# Copy server code only (not client)
+# Copy server code
 COPY server.js ./
-COPY videos/ ./videos/
+
+# Create videos directory (will be used for uploads)
+RUN mkdir -p videos
 
 # Expose port
 EXPOSE 5000
