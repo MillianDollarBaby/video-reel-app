@@ -24,7 +24,7 @@ const Login = ({ onLogin }) => {
     setError('');
 
     try {
-      const response = await axios.post('http://192.168.1.37:5000/api/login', formData);
+      const response = await axios.post('http://localhost:3001/api/login', formData);
       onLogin(response.data.token, response.data.user);
     } catch (error) {
       setError(error.response?.data?.message || 'Login failed');

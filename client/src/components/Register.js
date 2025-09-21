@@ -37,7 +37,7 @@ const Register = ({ onLogin }) => {
     }
 
     try {
-      const response = await axios.post('http://192.168.1.37:5000/api/register', {
+      const response = await axios.post('http://localhost:3001/api/register', {
         email: formData.email,
         password: formData.password
       });

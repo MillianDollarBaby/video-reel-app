@@ -107,7 +107,7 @@ const VideoFeed = ({ user, onLogout }) => {
 
   const loadCategories = async () => {
     try {
-      const response = await axios.get('http://192.168.1.37:5000/api/categories', getAuthHeaders());
+      const response = await axios.get('http://localhost:3001/api/categories', getAuthHeaders());
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
@@ -118,7 +118,7 @@ const VideoFeed = ({ user, onLogout }) => {
   const loadCategoryFeed = async (categoryName) => {
     try {
       // Get all videos from this category
-      const response = await axios.get(`http://192.168.1.37:5000/api/categories`, getAuthHeaders());
+      const response = await axios.get(`http://localhost:3001/api/categories`, getAuthHeaders());
       const category = response.data.find(cat => cat.name === categoryName);
       
       if (category && category.videos.length > 0) {
@@ -190,7 +190,7 @@ const VideoFeed = ({ user, onLogout }) => {
         }
       } else {
         // Algorithmic mode: Use server API
-        const response = await axios.get('http://192.168.1.37:5000/api/next-video', getAuthHeaders());
+        const response = await axios.get('http://localhost:3001/api/next-video', getAuthHeaders());
         
         if (response.data.resetViewed) {
           setError('🎉 Amazing! You\'ve watched everything! Starting fresh...');
@@ -221,7 +221,7 @@ const VideoFeed = ({ user, onLogout }) => {
     if (!currentVideo) return;
 
     try {
-      await axios.post('http://192.168.1.37:5000/api/interact', {
+      await axios.post('http://localhost:3001/api/interact', {
         videoPath: currentVideo.video.path,
         category: currentVideo.category,
         interactionType
@@ -434,7 +434,7 @@ const VideoFeed = ({ user, onLogout }) => {
           >
             <video
               ref={videoRef}
-              src={`http://192.168.1.37:5000${currentVideo.video.path}`}
+              src={`http://localhost:3001${currentVideo.video.path}`}
               className="video-player"
               onClick={handleVideoClick}
               onLoadedMetadata={handleVideoLoad}
