@@ -33,124 +33,12 @@ const VideoFeed = ({ user, onLogout }) => {
 
   const minSwipeDistance = 50;
 
-  useEffect(() => {
-    loadCategories();
-    loadNextVideo();
-  }, []);
-
-  useEffect(() => {
-    loadNextVideo();
-  }, [selectedCategory]);
-
-  // Check for PiP support on mount
-  useEffect(() => {
-    if (document.pictureInPictureEnabled) {
-      setIsPiPSupported(true);
-    }
-  }, []);
-
-  // Video event listeners
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleDurationChange = () => setDuration(video.duration);
-    const handleVolumeChange = () => {
-      setVolume(video.volume);
-      setIsMuted(video.muted);
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('durationchange', handleDurationChange);
-    video.addEventListener('volumechange', handleVolumeChange);
-
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      video.removeEventListener('durationchange', handleDurationChange);
-      video.removeEventListener('volumechange', handleVolumeChange);
-    };
-  }, [currentVideo]);
-
-  // Fullscreen event listeners
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  // PiP event listeners
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const handleEnterPiP = () => setIsPiPActive(true);
-    const handleLeavePiP = () => setIsPiPActive(false);
-
-    video.addEventListener('enterpictureinpicture', handleEnterPiP);
-    video.addEventListener('leavepictureinpicture', handleLeavePiP);
-
-    return () => {
-      video.removeEventListener('enterpictureinpicture', handleEnterPiP);
-      video.removeEventListener('leavepictureinpicture', handleLeavePiP);
-    };
-  }, [currentVideo]);
-
-  const getAuthHeaders = () => ({
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`
-    }
-  });
-
   const loadCategories = async () => {
     try {
       const response = await axios.get('http://localhost:3001/api/categories', getAuthHeaders());
       setCategories(response.data);
     } catch (error) {
       console.error('Error loading categories:', error);
-    }
-  };
-
-  // Load category feed (all videos from that category)
-  const loadCategoryFeed = async (categoryName) => {
-    try {
-      // Get all videos from this category
-      const response = await axios.get(`http://localhost:3001/api/categories`, getAuthHeaders());
-      const category = response.data.find(cat => cat.name === categoryName);
-      
-      if (category && category.videos.length > 0) {
-        // Shuffle the videos for variety
-        const shuffledVideos = [...category.videos];
-        for (let i = shuffledVideos.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
-        }
-        
-        // Store the feed for this category
-        setCategoryFeeds(prev => ({
-          ...prev,
-          [categoryName]: shuffledVideos
-        }));
-        
-        // Start from the first video
-        setCurrentCategoryIndex(0);
-        setCurrentVideo({
-          video: shuffledVideos[0],
-          category: categoryName
-        });
-        
-        // Reset video to beginning
-        setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.currentTime = 0;
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.error('Error loading category feed:', error);
     }
   };
 
@@ -215,6 +103,118 @@ const VideoFeed = ({ user, onLogout }) => {
     }
     
     setLoading(false);
+  };
+
+  useEffect(() => {
+    loadCategories();
+    loadNextVideo();
+  }, []);
+
+  useEffect(() => {
+    loadNextVideo();
+  }, [selectedCategory, loadNextVideo]);
+
+  // Check for PiP support on mount
+  useEffect(() => {
+    if (document.pictureInPictureEnabled) {
+      setIsPiPSupported(true);
+    }
+  }, []);
+
+  // Video event listeners
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => setCurrentTime(video.currentTime);
+    const handleDurationChange = () => setDuration(video.duration);
+    const handleVolumeChange = () => {
+      setVolume(video.volume);
+      setIsMuted(video.muted);
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('durationchange', handleDurationChange);
+    video.addEventListener('volumechange', handleVolumeChange);
+
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('durationchange', handleDurationChange);
+      video.removeEventListener('volumechange', handleVolumeChange);
+    };
+  }, [currentVideo]);
+
+  // Fullscreen event listeners
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // PiP event listeners
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleEnterPiP = () => setIsPiPActive(true);
+    const handleLeavePiP = () => setIsPiPActive(false);
+
+    video.addEventListener('enterpictureinpicture', handleEnterPiP);
+    video.addEventListener('leavepictureinpicture', handleLeavePiP);
+
+    return () => {
+      video.removeEventListener('enterpictureinpicture', handleEnterPiP);
+      video.removeEventListener('leavepictureinpicture', handleLeavePiP);
+    };
+  }, [currentVideo]);
+
+  const getAuthHeaders = () => ({
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  });
+
+  // Load category feed (all videos from that category)
+  const loadCategoryFeed = async (categoryName) => {
+    try {
+      // Get all videos from this category
+      const response = await axios.get(`http://localhost:3001/api/categories`, getAuthHeaders());
+      const category = response.data.find(cat => cat.name === categoryName);
+      
+      if (category && category.videos.length > 0) {
+        // Shuffle the videos for variety
+        const shuffledVideos = [...category.videos];
+        for (let i = shuffledVideos.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledVideos[i], shuffledVideos[j]] = [shuffledVideos[j], shuffledVideos[i]];
+        }
+        
+        // Store the feed for this category
+        setCategoryFeeds(prev => ({
+          ...prev,
+          [categoryName]: shuffledVideos
+        }));
+        
+        // Start from the first video
+        setCurrentCategoryIndex(0);
+        setCurrentVideo({
+          video: shuffledVideos[0],
+          category: categoryName
+        });
+        
+        // Reset video to beginning
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error loading category feed:', error);
+    }
   };
 
   const handleInteraction = async (interactionType) => {

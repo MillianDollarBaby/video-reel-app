@@ -8,10 +8,6 @@ const Preferences = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchPreferences();
-  }, []);
-
   const getAuthHeaders = () => ({
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -21,7 +17,7 @@ const Preferences = ({ user, onLogout }) => {
   const fetchPreferences = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://192.168.1.37:5000/api/preferences', getAuthHeaders());
+      const response = await axios.get('http://localhost:3001/api/preferences', getAuthHeaders());
       setPreferences(response.data);
     } catch (error) {
       setError('Failed to load preferences');
@@ -29,6 +25,10 @@ const Preferences = ({ user, onLogout }) => {
     }
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchPreferences();
+  }, []);
 
   const getScoreColor = (score) => {
     if (score >= 3) return '#4CAF50'; // Green for high preference
