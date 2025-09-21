@@ -11,6 +11,8 @@ const Register = ({ onLogin }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
 
   const handleChange = (e) => {
     setFormData({
@@ -37,7 +39,7 @@ const Register = ({ onLogin }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/api/register', {
+      const response = await axios.post(`${API_URL}/api/register`, {
         email: formData.email,
         password: formData.password
       });

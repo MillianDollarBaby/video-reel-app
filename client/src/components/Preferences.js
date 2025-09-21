@@ -8,6 +8,8 @@ const Preferences = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+
   const getAuthHeaders = () => ({
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`
@@ -17,7 +19,7 @@ const Preferences = ({ user, onLogout }) => {
   const fetchPreferences = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:3001/api/preferences', getAuthHeaders());
+      const response = await axios.get(`${API_URL}/api/preferences`, getAuthHeaders());
       setPreferences(response.data);
     } catch (error) {
       setError('Failed to load preferences');
