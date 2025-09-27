@@ -9,11 +9,14 @@ const multer = require('multer');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key';
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(express.json());
 app.use('/videos', express.static('videos'));
 app.use('/uploads', express.static('uploads'));
@@ -469,6 +472,24 @@ const createInitialFolders = () => {
     }
   });
 };
+
+// Health check endpoint for Railway
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Video Reel API Server is running!',
+    status: 'healthy',
+    port: PORT,
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    port: PORT,
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Initialize folders on startup
 createInitialFolders();
